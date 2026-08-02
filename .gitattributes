@@ -1,0 +1,4 @@
+# Force LF on checkout everywhere (incl. Windows CI runners, which default to
+# core.autocrlf=true). Tests compare golden files byte-for-byte, and the files
+# gcloud-ctx writes (INI, ADC JSON) always use LF, matching gcloud itself.
+* text=auto eol=lf
