@@ -41,11 +41,21 @@ gcloud-ctx show [NAME]              Show context details incl. impersonation and
 gcloud-ctx impersonate <SA> [--delegates d1,d2] [--quota-project P] [--context NAME]
 gcloud-ctx impersonate --clear [--context NAME]
 gcloud-ctx adc save [NAME]          Snapshot the live ADC file into the store for NAME (default: current)
+gcloud-ctx env [NAME] | --unset     Print POSIX exports pinning NAME for one shell only
 gcloud-ctx completion bash|zsh|fish|powershell
 gcloud-ctx --version
 ```
 
-Subcommand names (`create`, `show`, `impersonate`, `adc`, `completion`, and cobra's
+`env` exists because switches are machine-global (`active_config` + live ADC are
+single files): concurrent shells/agents that each need a different context use
+`eval "$(gcloud-ctx env NAME)"` instead, which emits
+`CLOUDSDK_ACTIVE_CONFIG_NAME` (gcloud's own per-process override) and
+`GOOGLE_APPLICATION_CREDENTIALS` pointing at the context's stored ADC snapshot.
+No global file is written; when the context has no snapshot the ADC variable is
+explicitly unset (never left stale) with a stderr hint; output is eval-safe
+POSIX (single-quoted, `'\''`-escaped).
+
+Subcommand names (`create`, `show`, `impersonate`, `adc`, `env`, `completion`, and cobra's
 own auto-generated `help`) shadow context names at the root level (a config literally
 named `show` must be switched to via `gcloud-ctx show`… it can't; document this as a
 known limitation — such names are unlikely given gcloud's name charset).
