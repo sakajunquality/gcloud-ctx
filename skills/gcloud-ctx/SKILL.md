@@ -55,6 +55,8 @@ gcloud-ctx show [NAME]              Details: props, impersonation target/delegat
 gcloud-ctx impersonate <SA> [--delegates d1,d2] [--quota-project P] [--context NAME]
 gcloud-ctx impersonate --clear [--context NAME]
 gcloud-ctx adc save [NAME]          Bind the current live ADC file to a context
+gcloud-ctx env [NAME]               Print POSIX exports pinning NAME for one shell only
+gcloud-ctx env --unset              Print the matching unset lines
 ```
 
 ## Recipes
@@ -84,6 +86,27 @@ means the grant is missing, not that the switch failed.
 
 Note: `create --impersonate SA` sets only the gcloud property. Run
 `gcloud-ctx impersonate SA` afterwards to make ADC match.
+
+**Use a context in THIS shell only (multi-agent / parallel sessions):**
+
+`gcloud-ctx <NAME>` switches machine-global state and would affect every other
+shell and agent on the machine. When you are one of several concurrent
+sessions, or you must not disturb the user's global context, pin per-shell
+instead:
+
+```sh
+eval "$(gcloud-ctx env prod)"     # this shell + children only; no global file touched
+# ... do the work ...
+eval "$(gcloud-ctx env --unset)"  # back to global behavior
+```
+
+This sets `CLOUDSDK_ACTIVE_CONFIG_NAME` (gcloud CLI side) and
+`GOOGLE_APPLICATION_CREDENTIALS` (ADC-consumer side, pointing at the context's
+stored snapshot). It requires the context to have a stored ADC snapshot for
+the ADC half — without one, only the gcloud side is pinned and a stderr hint
+says so. Prefer this over global switching whenever the user didn't explicitly
+ask to change the machine-wide context. Note that while these variables are
+set, global `gcloud-ctx <NAME>` switches have no effect in this shell.
 
 **Diagnose identity mismatches:**
 
