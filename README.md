@@ -200,6 +200,21 @@ describing it here. Two tools previously listed here — under the names `gcloud
 at `newkozlukov/gcloudctx` and `gcloud-switch` at `wshihadeh/gcloud-switch` — no
 longer resolve to a repository and have been dropped.)
 
+## AI agents (Agent Skill)
+
+The repo ships an [Agent Skill](skills/gcloud-ctx/SKILL.md) that teaches AI
+coding agents (Claude Code and other SKILL.md-compatible tools) how to operate
+gcloud-ctx safely: non-interactive usage, credentials hygiene, impersonation
+recipes, and how to sandbox experiments with `CLOUDSDK_CONFIG`.
+
+Install for Claude Code (per project or globally):
+
+```sh
+mkdir -p .claude/skills/gcloud-ctx      # or ~/.claude/skills/gcloud-ctx
+curl -fsSL https://raw.githubusercontent.com/sakajunquality/gcloud-ctx/main/skills/gcloud-ctx/SKILL.md \
+  -o .claude/skills/gcloud-ctx/SKILL.md
+```
+
 ## License
 
 Apache-2.0, see [LICENSE](LICENSE).
