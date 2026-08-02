@@ -281,17 +281,16 @@ by reading the config dir (shared code path with `list`).
 
 - Apache-2.0 (gcloud-ecosystem convention, patent grant; same as kubectx).
 - GoReleaser: darwin/linux/windows × amd64/arm64, `CGO_ENABLED=0`,
-  `-s -w -X main.version={{.Version}} …`, tar.gz (zip on Windows), checksums,
-  Homebrew *cask* (`homebrew_casks`, not the deprecated `brews`) pushed to
-  `sakajunquality/homebrew-tap` (needs a PAT secret; the tap doesn't exist until
-  the first tagged release publishes it, so README install steers people to
-  `go install`/GitHub Releases in the meantime).
+  `-s -w -X main.version={{.Version}} …`, tar.gz (zip on Windows), checksums.
+  Homebrew distribution is deliberately deferred: when it lands, use a
+  `homebrew_casks` entry (not the deprecated `brews`) pushed to a
+  `sakajunquality/homebrew-tap` repo with a PAT secret.
 - GitHub Actions: `ci.yml` (test matrix, golangci-lint with a version pinned to
   match `golangci-lint-action`'s major, and a `goreleaser check` job),
   `release.yml` (goreleaser on `v*` tags, `contents: write`, goreleaser version
   pinned to a `~> vX.Y` constraint rather than `latest`).
-- README: pitch → install (`go install`, GitHub Releases binaries; Homebrew tap
-  noted as available once the first tag ships) → usage block → "how it works"
+- README: pitch → install (`go install`, GitHub Releases binaries) → usage
+  block → "how it works"
   (local file ops only; what gets touched and what never does) → impersonation
   walkthrough → env vars (`CLOUDSDK_CONFIG`, `CLOUDSDK_ACTIVE_CONFIG_NAME`,
   `GOOGLE_APPLICATION_CREDENTIALS`, `GCLOUD_CTX_IGNORE_FZF`, `NO_COLOR`,
