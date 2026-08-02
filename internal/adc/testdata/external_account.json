@@ -1,0 +1,9 @@
+{
+  "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider",
+  "credential_source": {
+    "file": "/var/run/secrets/token"
+  },
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "type": "external_account"
+}

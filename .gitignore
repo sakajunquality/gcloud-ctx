@@ -1,0 +1,24 @@
+# Go build artifacts
+/gcloud-ctx
+/gcloud-ctx.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Coverage
+*.out
+coverage.txt
+coverage.html
+
+# GoReleaser output
+/dist/
+
+# Editor/OS cruft
+.DS_Store
+*.swp
+
+# Local env overrides
+.env
