@@ -23,10 +23,6 @@ go install github.com/sakajunquality/gcloud-ctx@latest
 Or download a prebuilt binary for your OS/arch from [GitHub
 Releases](https://github.com/sakajunquality/gcloud-ctx/releases).
 
-> **Homebrew tap:** `sakajunquality/homebrew-tap` ships starting with the first
-> tagged release; once that's out, `brew install sakajunquality/tap/gcloud-ctx`
-> will work. Until then, use one of the paths above.
-
 Consider aliasing it, kubectx-style:
 
 ```
