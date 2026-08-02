@@ -1,0 +1,8 @@
+{
+  "audience": "//iam.googleapis.com/locations/global/workforcePools/my-pool/providers/my-provider",
+  "client_id": "fake-client-id",
+  "client_secret": "fake-client-secret",
+  "refresh_token": "1//fake-refresh-token",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "type": "external_account_authorized_user"
+}

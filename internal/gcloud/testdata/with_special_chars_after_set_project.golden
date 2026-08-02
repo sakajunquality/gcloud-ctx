@@ -1,0 +1,6 @@
+[core]
+account = a@example.com # inline hash in value
+project = new-project
+
+[auth]
+impersonate_service_account = sa@x.iam.gserviceaccount.com ; trailing semicolon note

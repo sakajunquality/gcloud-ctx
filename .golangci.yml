@@ -1,0 +1,26 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - gocritic
+    - revive
+    - misspell
+  settings:
+    errcheck:
+      # fmt.Fprint*'s error is only ever meaningful for a full disk or a
+      # broken pipe on stdout/stderr, neither of which gcloud-ctx can
+      # usefully recover from; every call site here writes to an internal
+      # writer (a.out/a.errw, a tabwriter, or os.Stderr in main's error
+      # path), never to something whose write failure changes program
+      # behavior. Narrow exclusion instead of `_, _ = fmt.Fprint...` at
+      # ~60 call sites.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
