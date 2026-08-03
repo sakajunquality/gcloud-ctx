@@ -19,7 +19,7 @@ const (
 	adcSubdir     = "adc"
 	previousFile  = "previous"
 	adcFileSuffix = ".json"
-	dirPerm       = 0o755
+	dirPerm       = 0o700
 	previousPerm  = 0o644
 )
 

@@ -183,7 +183,7 @@ func (s *Store) Activate(name string) error {
 // writeActiveConfig overwrites active_config with the exact bytes of name
 // (no trailing newline), creating the config directory if needed.
 func (s *Store) writeActiveConfig(name string) error {
-	if err := os.MkdirAll(s.Dir, 0o755); err != nil {
+	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
 		return fmt.Errorf("create config directory: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(s.Dir, activeConfigFile), []byte(name), 0o644); err != nil {
@@ -198,7 +198,7 @@ func (s *Store) writeActiveConfig(name string) error {
 // DeleteProperty) — matching gcloud, which touches it any time there is a
 // change to config, not only on activation.
 func (s *Store) touchSentinel() error {
-	if err := os.MkdirAll(s.Dir, 0o755); err != nil {
+	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
 		return fmt.Errorf("create config directory: %w", err)
 	}
 	if err := touch(filepath.Join(s.Dir, configSentinelFile)); err != nil {
@@ -248,7 +248,7 @@ func (s *Store) Create(name string, props Properties) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return fmt.Errorf("create configurations directory: %w", err)
 	}
 	if err := os.WriteFile(path, nil, 0o644); err != nil {
@@ -565,7 +565,7 @@ func (s *Store) mutateINI(name string, fn func(*ini.File) error) error {
 	if _, err := f.WriteTo(&buf); err != nil {
 		return fmt.Errorf("render configuration %q: %w", name, err)
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return fmt.Errorf("create configurations directory: %w", err)
 	}
 	if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
