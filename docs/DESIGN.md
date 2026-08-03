@@ -19,8 +19,11 @@ mechanisms in gcloud; leaving them out of sync is a classic footgun.
 
 - Never read or write `credentials.db` / `access_tokens.db` (gcloud's own OAuth token
   stores, keyed by account email, shared across configurations).
-- No OAuth/browser flows. Obtaining the base user ADC stays `gcloud auth
-  application-default login`'s job.
+- No OAuth/browser flows implemented in-process. Obtaining the base user ADC
+  stays `gcloud auth application-default login`'s job — `gcloud-ctx refresh`
+  orchestrates that command (shells out to the real `gcloud`) and then repairs
+  the snapshots derived from the fresh credential; it never speaks OAuth
+  itself.
 - No network calls at switch time. Switching is pure local file manipulation, exactly
   like `gcloud config configurations activate`.
 
@@ -42,6 +45,7 @@ gcloud-ctx impersonate <SA> [--delegates d1,d2] [--quota-project P] [--context N
 gcloud-ctx impersonate --clear [--context NAME]
 gcloud-ctx adc save [NAME]          Snapshot the live ADC file into the store for NAME (default: current)
 gcloud-ctx env [NAME] | --unset     Print POSIX exports pinning NAME for one shell only
+gcloud-ctx refresh [NAME]           Re-run ADC login and rebuild same-account snapshots
 gcloud-ctx completion bash|zsh|fish|powershell
 gcloud-ctx --version
 ```
@@ -55,7 +59,19 @@ No global file is written; when the context has no snapshot the ADC variable is
 explicitly unset (never left stale) with a stderr hint; output is eval-safe
 POSIX (single-quoted, `'\''`-escaped).
 
-Subcommand names (`create`, `show`, `impersonate`, `adc`, `env`, `completion`, and cobra's
+`refresh` exists because ADC snapshots are file copies of refresh tokens: when
+the underlying token dies (Workspace re-auth policy, revocation, password
+change), every snapshot copied from it dies at once. `refresh [NAME]` shells
+out to `gcloud auth application-default login`, updates NAME's snapshot
+(swapping only `source_credentials` when the snapshot is impersonated, so the
+target/delegates/quota project survive), rebuilds every other context's
+snapshot derived from the same account, and reinstalls the active context's
+snapshot as the live ADC (login leaves a plain user credential there, which is
+wrong when the active context impersonates). The gcloud CLI's own token store
+(`credentials.db`) is separate and shared per account; `gcloud auth login`
+remains the fix for that side.
+
+Subcommand names (`create`, `show`, `impersonate`, `adc`, `env`, `refresh`, `completion`, and cobra's
 own auto-generated `help`) shadow context names at the root level (a config literally
 named `show` must be switched to via `gcloud-ctx show`… it can't; document this as a
 known limitation — such names are unlikely given gcloud's name charset).

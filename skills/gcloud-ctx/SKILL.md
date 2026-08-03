@@ -57,6 +57,7 @@ gcloud-ctx impersonate --clear [--context NAME]
 gcloud-ctx adc save [NAME]          Bind the current live ADC file to a context
 gcloud-ctx env [NAME]               Print POSIX exports pinning NAME for one shell only
 gcloud-ctx env --unset              Print the matching unset lines
+gcloud-ctx refresh [NAME]           Re-run ADC login, rebuild same-account snapshots
 ```
 
 ## Recipes
@@ -107,6 +108,24 @@ the ADC half — without one, only the gcloud side is pinned and a stderr hint
 says so. Prefer this over global switching whenever the user didn't explicitly
 ask to change the machine-wide context. Note that while these variables are
 set, global `gcloud-ctx <NAME>` switches have no effect in this shell.
+
+**Recover from expired/revoked credentials (`invalid_grant`, "Token has been
+expired or revoked", Workspace re-auth policies):**
+
+```sh
+gcloud-ctx refresh    # interactive: opens a browser via gcloud — needs the user present
+```
+
+This re-runs ADC login and rebuilds every snapshot derived from the same
+account (impersonation targets are preserved). It is interactive: do not run
+it unattended; tell the user it will open a browser. On a host without a
+browser (SSH, containers), suggest `refresh --no-launch-browser` (user opens
+the printed URL) or `refresh --no-browser` (gcloud's remote-bootstrap flow) —
+both still need the user, so hand the command to them instead of running it. If plain `gcloud`
+commands also fail with `Reauthentication required`, additionally run
+`gcloud auth login` (once per account). A 403 during impersonation is a
+permissions problem (`roles/iam.serviceAccountTokenCreator`), not expiry —
+don't refresh for that.
 
 **Diagnose identity mismatches:**
 
