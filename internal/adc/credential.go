@@ -92,6 +92,40 @@ func (c *Credential) SourceCredentials() (*Credential, error) {
 	return &Credential{raw: src}, nil
 }
 
+// WithSourceCredentials returns a copy of an impersonated_service_account
+// credential whose source_credentials is replaced by base, leaving the
+// impersonation target, delegates, and quota project untouched. Used when a
+// base user credential has been re-obtained (gcloud-ctx refresh) and
+// dependent impersonation snapshots must be rebuilt on top of it.
+func (c *Credential) WithSourceCredentials(base *Credential) (*Credential, error) {
+	if c.Type() != TypeImpersonatedServiceAccount {
+		return nil, fmt.Errorf("credential type %q has no source_credentials", c.Type())
+	}
+	if base == nil {
+		return nil, fmt.Errorf("missing base credentials")
+	}
+	// Deep-copy via a marshal/parse round trip so neither c nor base shares
+	// mutable state with the result.
+	data, err := c.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	out, err := Parse(data)
+	if err != nil {
+		return nil, err
+	}
+	baseData, err := base.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	baseCopy, err := Parse(baseData)
+	if err != nil {
+		return nil, err
+	}
+	out.raw["source_credentials"] = baseCopy.raw
+	return out, nil
+}
+
 // ImpersonationURL returns the "service_account_impersonation_url" field. It
 // is only meaningful for impersonated_service_account credentials.
 func (c *Credential) ImpersonationURL() string {

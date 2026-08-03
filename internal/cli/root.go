@@ -61,6 +61,7 @@ Examples (kubectx-style grammar):
 		newImpersonateCmd(),
 		newADCCmd(),
 		newEnvCmd(),
+		newRefreshCmd(),
 	)
 
 	return root

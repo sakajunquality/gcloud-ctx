@@ -48,6 +48,7 @@ gcloud-ctx impersonate --clear [--context NAME]
 gcloud-ctx adc save [NAME]          Snapshot the live ADC file into the store for NAME (default: current)
 gcloud-ctx env [NAME]               Print exports that pin NAME for one shell only (see below)
 gcloud-ctx env --unset              Print the matching unset lines
+gcloud-ctx refresh [NAME]           Re-run ADC login and rebuild every same-account snapshot
 gcloud-ctx completion bash|zsh|fish|powershell
 gcloud-ctx --version
 ```
@@ -58,10 +59,31 @@ to exit without switching. Set `GCLOUD_CTX_IGNORE_FZF` to always fall back to a 
 sorted list instead (useful in scripts piping through a pager).
 
 > **Known limitation:** subcommand names (`create`, `show`, `impersonate`, `adc`,
-> `env`, `completion`, `help`) shadow context names at the root level — a context
+> `env`, `refresh`, `completion`, `help`) shadow context names at the root level — a context
 > literally named `show` can't be switched to via `gcloud-ctx show`. This is unlikely
 > in practice given `gcloud`'s config name charset (`^[a-z][-a-z0-9]*$`), but it's a
 > known tradeoff of reusing the kubectx grammar.
+
+## Re-authentication
+
+ADC snapshots are file copies of refresh tokens. Tokens don't normally expire,
+but Workspace re-auth policies, revocation, or a password change kill them —
+and every snapshot copied from that token dies at once. One command recovers
+everything:
+
+```sh
+gcloud-ctx refresh            # or: gcloud-ctx refresh work
+```
+
+It runs `gcloud auth application-default login` (browser), updates the
+context's snapshot — **preserving impersonation targets/delegates/quota
+projects** for impersonated snapshots — rebuilds every other context's
+snapshot derived from the same account, and leaves the live ADC matching the
+active context. Other accounts' snapshots are untouched.
+
+The gcloud CLI's own login is a separate per-account token store; if `gcloud`
+itself says `Reauthentication required`, also run `gcloud auth login` (once
+per account — all contexts referencing that account share it).
 
 ## Per-shell contexts (multiple agents / terminals)
 
