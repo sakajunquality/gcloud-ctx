@@ -11,13 +11,16 @@ import (
 
 // stubADCLogin replaces the interactive gcloud login with a fake that writes
 // newLive as the live ADC file, restoring the real implementation afterwards.
-func stubADCLogin(t *testing.T, dir, newLive string) {
+func stubADCLogin(t *testing.T, dir, newLive string) *[]string {
 	t.Helper()
 	orig := adcLoginRun
-	adcLoginRun = func() error {
+	var gotArgs []string
+	adcLoginRun = func(extraArgs ...string) error {
+		gotArgs = append(gotArgs, extraArgs...)
 		return os.WriteFile(filepath.Join(dir, "application_default_credentials.json"), []byte(newLive), 0o600)
 	}
 	t.Cleanup(func() { adcLoginRun = orig })
+	return &gotArgs
 }
 
 // failADCLogin replaces the login stub with one that fails without touching
@@ -25,7 +28,7 @@ func stubADCLogin(t *testing.T, dir, newLive string) {
 func failADCLogin(t *testing.T) {
 	t.Helper()
 	orig := adcLoginRun
-	adcLoginRun = func() error { return fmt.Errorf("login aborted") }
+	adcLoginRun = func(...string) error { return fmt.Errorf("login aborted") }
 	t.Cleanup(func() { adcLoginRun = orig })
 }
 
@@ -176,6 +179,36 @@ func TestRefresh_loginFailure_changesNothing(t *testing.T) {
 	}
 	if got := snapshotJSON(t, dir, "work")["refresh_token"]; got != "OLD" {
 		t.Errorf("snapshot must be untouched on login failure, token = %v", got)
+	}
+}
+
+func TestRefresh_forwardsBrowserFlags(t *testing.T) {
+	dir := testEnv(t)
+	writeFile(t, filepath.Join(dir, "configurations", "config_work"), "")
+	writeFile(t, filepath.Join(dir, "active_config"), "work")
+
+	got := stubADCLogin(t, dir, userADC("a@example.com", "NEW"))
+	_, stderr, err := run(t, "refresh", "--no-launch-browser")
+	if err != nil {
+		t.Fatalf("refresh --no-launch-browser: %v", err)
+	}
+	if len(*got) != 1 || (*got)[0] != "--no-launch-browser" {
+		t.Errorf("forwarded args = %v, want [--no-launch-browser]", *got)
+	}
+	if !strings.Contains(stderr, "gcloud auth application-default login --no-launch-browser") {
+		t.Errorf("status line should echo the forwarded flag:\n%s", stderr)
+	}
+
+	got2 := stubADCLogin(t, dir, userADC("a@example.com", "NEW2"))
+	if _, _, err := run(t, "refresh", "--no-browser"); err != nil {
+		t.Fatalf("refresh --no-browser: %v", err)
+	}
+	if len(*got2) != 1 || (*got2)[0] != "--no-browser" {
+		t.Errorf("forwarded args = %v, want [--no-browser]", *got2)
+	}
+
+	if _, _, err := run(t, "refresh", "--no-browser", "--no-launch-browser"); err == nil {
+		t.Fatal("expected mutually-exclusive flag error")
 	}
 }
 

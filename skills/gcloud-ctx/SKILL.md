@@ -118,7 +118,10 @@ gcloud-ctx refresh    # interactive: opens a browser via gcloud — needs the us
 
 This re-runs ADC login and rebuilds every snapshot derived from the same
 account (impersonation targets are preserved). It is interactive: do not run
-it unattended; tell the user it will open a browser. If plain `gcloud`
+it unattended; tell the user it will open a browser. On a host without a
+browser (SSH, containers), suggest `refresh --no-launch-browser` (user opens
+the printed URL) or `refresh --no-browser` (gcloud's remote-bootstrap flow) —
+both still need the user, so hand the command to them instead of running it. If plain `gcloud`
 commands also fail with `Reauthentication required`, additionally run
 `gcloud auth login` (once per account). A 403 during impersonation is a
 permissions problem (`roles/iam.serviceAccountTokenCreator`), not expiry —

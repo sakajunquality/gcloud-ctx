@@ -85,6 +85,11 @@ The gcloud CLI's own login is a separate per-account token store; if `gcloud`
 itself says `Reauthentication required`, also run `gcloud auth login` (once
 per account — all contexts referencing that account share it).
 
+No browser on this machine? Both of gcloud's login fallbacks are forwarded
+verbatim: `gcloud-ctx refresh --no-launch-browser` (prints the URL to open
+yourself) and `gcloud-ctx refresh --no-browser` (remote-bootstrap flow for
+SSH hosts; requires gcloud on a browser-equipped machine too).
+
 ## Per-shell contexts (multiple agents / terminals)
 
 `gcloud-ctx <NAME>` switches machine-global state (`active_config` and the live

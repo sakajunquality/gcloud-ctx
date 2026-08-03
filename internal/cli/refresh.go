@@ -13,15 +13,17 @@ import (
 )
 
 // adcLoginRun re-obtains the base user ADC by shelling out to the real
-// gcloud binary (gcloud-ctx never implements OAuth flows itself). It is a
-// package variable so tests can stub the browser flow with a fake that
+// gcloud binary (gcloud-ctx never implements OAuth flows itself), forwarding
+// any extra login flags (--no-launch-browser, --no-browser) verbatim. It is
+// a package variable so tests can stub the browser flow with a fake that
 // writes a fresh ADC file.
-var adcLoginRun = func() error {
+var adcLoginRun = func(extraArgs ...string) error {
 	path, err := exec.LookPath("gcloud")
 	if err != nil {
 		return fmt.Errorf("gcloud not found on PATH; install the Google Cloud CLI to refresh ADC")
 	}
-	cmd := exec.Command(path, "auth", "application-default", "login")
+	args := append([]string{"auth", "application-default", "login"}, extraArgs...)
+	cmd := exec.Command(path, args...)
 	// The login flow is interactive (browser hand-off, confirmation prompt),
 	// so it gets the process's real terminal, not the command's buffers.
 	cmd.Stdin = os.Stdin
@@ -34,6 +36,7 @@ var adcLoginRun = func() error {
 }
 
 func newRefreshCmd() *cobra.Command {
+	var noLaunchBrowser, noBrowser bool
 	cmd := &cobra.Command{
 		Use:   "refresh [NAME]",
 		Short: "Re-authenticate ADC and rebuild every snapshot that depends on it",
@@ -52,6 +55,11 @@ application-default login' (browser flow), then:
 The live ADC file ends up matching the active context's snapshot. The
 gcloud CLI's own login (credentials.db) is a separate token store; if that
 is expired too, also run 'gcloud auth login'.
+
+--no-launch-browser and --no-browser are forwarded to gcloud verbatim:
+the former prints a URL to open yourself (same machine), the latter runs
+gcloud's remote-bootstrap flow for hosts with no browser at all (SSH —
+requires gcloud on a browser-equipped machine too).
 `),
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completeContextNames,
@@ -64,14 +72,24 @@ is expired too, also run 'gcloud auth login'.
 			if len(args) == 1 {
 				name = args[0]
 			}
-			return a.refresh(name)
+			var loginArgs []string
+			if noLaunchBrowser {
+				loginArgs = append(loginArgs, "--no-launch-browser")
+			}
+			if noBrowser {
+				loginArgs = append(loginArgs, "--no-browser")
+			}
+			return a.refresh(name, loginArgs)
 		},
 	}
+	cmd.Flags().BoolVar(&noLaunchBrowser, "no-launch-browser", false, "don't open a browser; print the login URL to open manually")
+	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "this host has no browser; use gcloud's remote-bootstrap login flow")
+	cmd.MarkFlagsMutuallyExclusive("no-launch-browser", "no-browser")
 	return cmd
 }
 
 // refresh implements "gcloud-ctx refresh [NAME]".
-func (a *app) refresh(context string) error {
+func (a *app) refresh(context string, loginArgs []string) error {
 	name, err := a.resolveImpersonateContext(context)
 	if err != nil {
 		return err
@@ -92,8 +110,9 @@ func (a *app) refresh(context string) error {
 		}
 	}
 
-	fmt.Fprintf(a.errw, "Running 'gcloud auth application-default login'...\n")
-	if err := adcLoginRun(); err != nil {
+	loginCmd := strings.TrimSpace("gcloud auth application-default login " + strings.Join(loginArgs, " "))
+	fmt.Fprintf(a.errw, "Running '%s'...\n", loginCmd)
+	if err := adcLoginRun(loginArgs...); err != nil {
 		return err
 	}
 
