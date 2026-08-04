@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.31.0
 	gopkg.in/ini.v1 v1.67.3
 )
